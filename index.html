@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bloom Loft — My Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #8a9e7b;
+    --sage-light: #c8d9bc;
+    --sage-pale: #eef3ea;
+    --terracotta: #c4714a;
+    --terra-pale: #fdf0ea;
+    --gold: #c9a84c;
+    --gold-pale: #fdf7e8;
+    --cream: #faf8f4;
+    --warm-white: #fff9f4;
+    --charcoal: #2d2d2a;
+    --mid: #6b6b65;
+    --border: #e2ddd6;
+    --red: #d94f4f;
+    --red-pale: #fdf0f0;
+    --shadow: 0 2px 16px rgba(45,45,42,0.09);
+    --shadow-lg: 0 8px 40px rgba(45,45,42,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--charcoal);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: white; }
+  .logo em { color: var(--sage-light); font-style: italic; }
+  .header-date { font-size: 12px; color: var(--sage-light); font-weight: 300; }
+
+  .main { max-width: 640px; margin: 0 auto; padding: 22px 18px; }
+
+  /* ── CLOCK IN/OUT CARD ── */
+  .clock-card {
+    border-radius: 20px;
+    padding: 24px 22px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .clock-card.clocked-out {
+    background: var(--charcoal);
+  }
+  .clock-card.clocked-in {
+    background: linear-gradient(135deg, #2d4a2a 0%, #1e3320 100%);
+  }
+  .clock-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    pointer-events: none;
+  }
+  .clock-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .clock-status-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+  }
+  .clock-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: white;
+    font-weight: 600;
+  }
+  .clock-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  .clock-status-pill.out {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+  }
+  .clock-status-pill.in {
+    background: rgba(138,158,123,0.25);
+    color: var(--sage-light);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .status-dot.in { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* LIVE TIMER */
+  .live-timer {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    font-weight: 600;
+    color: white;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: opacity 0.3s;
+  }
+  .live-timer.dim { opacity: 0.2; }
+  .clock-in-time {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    min-height: 18px;
+  }
+  .clock-in-time.active { color: var(--sage-light); }
+
+  /* CLOCK BUTTON */
+  .clock-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    letter-spacing: 0.3px;
+  }
+  .clock-btn.btn-clockin {
+    background: var(--sage);
+    color: white;
+  }
+  .clock-btn.btn-clockin:hover { background: #7b9069; }
+  .clock-btn.btn-clockout {
+    background: rgba(196,113,74,0.85);
+    color: white;
+  }
+  .clock-btn.btn-clockout:hover { background: var(--terracotta); }
+  .clock-btn:active { transform: scale(0.97); }
+
+  /* SHIFT HISTORY */
+  .shift-history {
+    margin-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 14px;
+  }
+  .shift-history-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .shift-history-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3);
+  }
+  .shift-week-total { font-size: 12px; color: var(--sage-light); font-weight: 500; }
+  .shift-date-group { margin-bottom: 10px; }
+  .shift-date-group:last-child { margin-bottom: 0; }
+  .shift-date-header {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .shift-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0 5px 8px;
+  }
+  .shift-row-times { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .shift-row-duration {
+    font-size: 12px;
+    color: var(--sage-light);
+    font-weight: 500;
+  }
+
+  /* STAFF SELECTOR */
+  .staff-selector { margin-bottom: 22px; }
+  .selector-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--mid); margin-bottom: 10px; }
+  .staff-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .staff-pill {
+    padding: 10px 20px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    background: white;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--mid);
+  }
+  .staff-pill.active { color: white; border-color: transparent; }
+  .staff-pill .pill-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* NO DATA */
+  .no-data { text-align: center; padding: 60px 20px; color: var(--mid); }
+  .no-data .big-emoji { font-size: 48px; margin-bottom: 16px; }
+  .no-data h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 8px; color: var(--charcoal); }
+
+  /* WEEK BANNER */
+  .week-banner {
+    background: var(--charcoal);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+    color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .week-banner-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; margin-bottom: 2px; }
+  .week-banner-sub { font-size: 12px; color: var(--sage-light); }
+  .progress-wrap { text-align: right; }
+  .progress-pct { font-size: 26px; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--sage-light); line-height: 1; }
+  .progress-label { font-size: 11px; color: var(--sage-light); opacity: 0.7; margin-top: 2px; }
+  .progress-bar-track { height: 4px; background: rgba(255,255,255,0.15); border-radius: 100px; margin-top: 12px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--sage-light); border-radius: 100px; transition: width 0.5s ease; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--mid); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* TOP 3 */
+  .top3-section { margin-bottom: 26px; }
+  .priority-cards { display: flex; flex-direction: column; gap: 10px; }
+  .priority-card {
+    border-radius: 14px; padding: 15px 16px;
+    display: flex; align-items: flex-start; gap: 14px;
+    border: 1.5px solid transparent; transition: all 0.25s; cursor: pointer;
+  }
+  .priority-card.p1 { background: var(--terra-pale); border-color: var(--terracotta); }
+  .priority-card.p2 { background: var(--gold-pale); border-color: var(--gold); }
+  .priority-card.p3 { background: var(--sage-pale); border-color: var(--sage); }
+  .priority-card.done { opacity: 0.5; }
+  .priority-card.done .pc-text { text-decoration: line-through; }
+  .pc-number { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; line-height: 1; min-width: 26px; }
+  .p1 .pc-number { color: var(--terracotta); }
+  .p2 .pc-number { color: var(--gold); }
+  .p3 .pc-number { color: var(--sage); }
+  .pc-content { flex: 1; }
+  .pc-text { font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--charcoal); }
+  .pc-check {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; transition: all 0.2s; margin-top: 2px;
+  }
+  .p1 .pc-check { border-color: var(--terracotta); color: var(--terracotta); }
+  .p2 .pc-check { border-color: var(--gold); color: var(--gold); }
+  .p3 .pc-check { border-color: var(--sage); color: var(--sage); }
+  .priority-card.done .pc-check { background: var(--sage); border-color: var(--sage); color: white; }
+
+  /* CATEGORIES */
+  .categories-section { display: flex; flex-direction: column; gap: 14px; margin-bottom: 26px; }
+  .cat-card { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  .cat-header {
+    padding: 13px 16px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; border-bottom: 1px solid var(--border); user-select: none;
+  }
+  .cat-header-left { display: flex; align-items: center; gap: 9px; }
+  .cat-emoji { font-size: 17px; }
+  .cat-title { font-size: 14px; font-weight: 600; color: var(--charcoal); }
+  .cat-progress { font-size: 12px; color: var(--mid); display: flex; align-items: center; gap: 8px; }
+  .cat-mini-bar { width: 46px; height: 4px; background: var(--border); border-radius: 100px; overflow: hidden; }
+  .cat-mini-fill { height: 100%; background: var(--sage); border-radius: 100px; transition: width 0.4s; }
+  .cat-toggle { font-size: 15px; color: var(--mid); transition: transform 0.2s; }
+  .cat-card.collapsed .cat-toggle { transform: rotate(-90deg); }
+  .cat-card.collapsed .cat-body { display: none; }
+  .cat-body { padding: 6px 0; }
+
+  /* TASK ITEM */
+  .task-item {
+    display: flex; align-items: flex-start; gap: 13px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-item:active { background: var(--cream); }
+  .task-checkbox {
+    width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; transition: all 0.2s; margin-top: 1px; background: white;
+  }
+  .task-item.done .task-checkbox { background: var(--sage); border-color: var(--sage); color: white; }
+  .task-item.overdue .task-checkbox { border-color: var(--red); }
+  .task-info { flex: 1; min-width: 0; }
+  .task-name { font-size: 14px; font-weight: 500; color: var(--charcoal); line-height: 1.4; transition: all 0.2s; }
+  .task-item.done .task-name { text-decoration: line-through; color: var(--mid); }
+  .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+  .task-deadline-tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 500; }
+  .task-deadline-tag.upcoming { background: var(--gold-pale); color: var(--gold); }
+  .task-deadline-tag.overdue { background: var(--red-pale); color: var(--red); }
+  .task-deadline-tag.today { background: var(--terra-pale); color: var(--terracotta); }
+  .task-deadline-tag.done-tag { background: var(--sage-pale); color: var(--sage); }
+  .task-priority-tag { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 500; }
+  .task-priority-tag.high { background: var(--terra-pale); color: var(--terracotta); }
+  .task-priority-tag.medium { background: var(--gold-pale); color: var(--gold); }
+  .task-done-time { font-size: 11px; color: var(--sage); }
+
+  /* NOTES */
+  .notes-card { background: white; border-radius: 16px; border: 1px solid var(--border); padding: 16px; margin-bottom: 26px; box-shadow: var(--shadow); }
+  .notes-card .notes-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--mid); margin-bottom: 8px; }
+  .notes-text { font-size: 14px; color: var(--charcoal); line-height: 1.7; white-space: pre-wrap; }
+
+  /* ALL DONE */
+  .completed-banner {
+    text-align: center; padding: 28px 20px; background: var(--sage-pale);
+    border-radius: 16px; border: 1px solid var(--sage-light); margin-bottom: 18px;
+  }
+  .completed-banner .big { font-size: 38px; margin-bottom: 10px; }
+  .completed-banner h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--sage); margin-bottom: 6px; }
+  .completed-banner p { font-size: 13px; color: var(--mid); }
+
+  /* REFRESH BTN */
+  .refresh-btn {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 50px; height: 50px; background: var(--charcoal); border-radius: 50%;
+    border: none; color: white; font-size: 20px; cursor: pointer;
+    box-shadow: var(--shadow-lg); display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+  }
+  .refresh-btn:active { transform: scale(0.92); }
+
+  /* CONFIRM MODAL */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(45,45,42,0.6);
+    backdrop-filter: blur(6px); z-index: 200;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-sheet {
+    background: var(--cream); border-radius: 24px 24px 0 0;
+    padding: 32px 24px 40px; width: 100%; max-width: 480px;
+    text-align: center;
+  }
+  .confirm-sheet .sheet-emoji { font-size: 44px; margin-bottom: 14px; }
+  .confirm-sheet h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 8px; color: var(--charcoal); }
+  .confirm-sheet p { font-size: 14px; color: var(--mid); margin-bottom: 24px; line-height: 1.6; }
+  .confirm-btns { display: flex; flex-direction: column; gap: 10px; }
+  .confirm-btn {
+    width: 100%; padding: 15px; border-radius: 14px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .confirm-btn.yes-in { background: var(--sage); color: white; }
+  .confirm-btn.yes-out { background: var(--terracotta); color: white; }
+  .confirm-btn.cancel { background: var(--border); color: var(--mid); }
+
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .confirm-sheet { animation: slideUp 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .main > * { animation: fadeIn 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">Bloom <em>Loft</em></div>
+    <div class="header-date" id="today-date"></div>
+  </div>
+</div>
+
+<div class="main" id="main-content"></div>
+
+<button class="refresh-btn" onclick="loadData()" title="Refresh">↻</button>
+
+<!-- CONFIRM SHEET -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-sheet">
+    <div class="sheet-emoji" id="confirm-emoji">🌿</div>
+    <h3 id="confirm-title">Clock In?</h3>
+    <p id="confirm-body">Ready to start your shift?</p>
+    <div class="confirm-btns">
+      <button class="confirm-btn" id="confirm-yes" onclick="confirmClock()">Yes, Clock In</button>
+      <button class="confirm-btn cancel" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://faqackamquecovmlyycl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhcWFja2FtcXVlY292bWx5eWNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTk4NzIsImV4cCI6MjA5MjUzNTg3Mn0.UtyVu7b9K4FGwoXu29V5-cZ2NBqfCYdy0gRdj7Y62wY';
+const STORAGE_KEY = 'bloomloft_tasks_v1';
+const CLOCK_KEY = 'bloomloft_clock_v1';
+const today = new Date();
+
+document.getElementById('today-date').textContent = today.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+
+let taskData = null;
+let clockData = {};
+let activeStaffId = null;
+let timerInterval = null;
+let pendingClockAction = null;
+
+// ── SUPABASE HELPERS ──────────────────────────────────────────────────────
+async function dbGet(key) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/bloom_loft_data?key=eq.${encodeURIComponent(key)}&select=value`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    const rows = await res.json();
+    if (!rows || !rows.length) return null;
+    return JSON.parse(rows[0].value);
+  } catch(e) {
+    // fallback to localStorage
+    try { return JSON.parse(localStorage.getItem(key)); } catch(e2) { return null; }
+  }
+}
+
+async function dbSet(key, value) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/bloom_loft_data`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key, value: JSON.stringify(value) })
+    });
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch(e) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────────
+async function loadData() {
+  taskData = await dbGet(STORAGE_KEY);
+  clockData = await dbGet(CLOCK_KEY) || {};
+  render();
+}
+
+async function saveClockData() {
+  await dbSet(CLOCK_KEY, clockData);
+}
+
+// ── CLOCK LOGIC ───────────────────────────────────────────────────────────
+function getStaffClock(sid) {
+  if (!clockData[sid]) clockData[sid] = { currentShift: null, history: [] };
+  return clockData[sid];
+}
+
+function isClockedIn(sid) {
+  return !!getStaffClock(sid).currentShift;
+}
+
+async function clockIn(sid) {
+  const sc = getStaffClock(sid);
+  sc.currentShift = { inTime: new Date().toISOString(), inFormatted: fullTimeStr() };
+  await saveClockData();
+  startTimer(sid);
+  render();
+}
+
+async function clockOut(sid) {
+  const sc = getStaffClock(sid);
+  if (!sc.currentShift) return;
+  const outTime = new Date();
+  const inTime = new Date(sc.currentShift.inTime);
+  const duration = calcDuration(inTime, outTime);
+  sc.history.unshift({
+    date: outTime.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
+    inTime: sc.currentShift.inFormatted,
+    outTime: fullTimeStr(),
+    duration,
+    inISO: sc.currentShift.inTime,
+    outISO: outTime.toISOString()
+  });
+  sc.currentShift = null;
+  saveClockData();
+  stopTimer();
+  render();
+}
+
+function calcDuration(inTime, outTime) {
+  const ms = outTime - inTime;
+  const totalMins = Math.floor(ms / 60000);
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs === 0) return `${mins}m`;
+  return `${hrs}h ${mins}m`;
+}
+
+function elapsedSince(isoStr) {
+  const ms = new Date() - new Date(isoStr);
+  const totalSecs = Math.floor(ms / 1000);
+  const hrs = Math.floor(totalSecs / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+  const secs = totalSecs % 60;
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
+function startTimer(sid) {
+  stopTimer();
+  timerInterval = setInterval(() => {
+    const sc = getStaffClock(sid);
+    if (!sc.currentShift) { stopTimer(); return; }
+    const el = document.getElementById('live-timer');
+    if (el) el.textContent = elapsedSince(sc.currentShift.inTime);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+// ── CONFIRM SHEET ─────────────────────────────────────────────────────────
+function showClockConfirm(sid, action) {
+  pendingClockAction = { sid, action };
+  const staffMember = taskData && taskData.staff ? taskData.staff.find(function(s){return s.id===sid;}) : null;
+  const name = staffMember ? staffMember.name : 'you';
+  const firstName = name.split(' ')[0];
+  const overlay = document.getElementById('confirm-overlay');
+  const emoji = document.getElementById('confirm-emoji');
+  const title = document.getElementById('confirm-title');
+  const body = document.getElementById('confirm-body');
+  const btn = document.getElementById('confirm-yes');
+
+  if (action === 'in') {
+    emoji.textContent = '🌿';
+    title.textContent = `Clock In, ${firstName}?`;
+    body.textContent = `This will record your shift start time as ${fullTimeStr()}.`;
+    btn.textContent = 'Yes, Clock In';
+    btn.className = 'confirm-btn yes-in';
+  } else {
+    const sc = getStaffClock(sid);
+    const elapsed = sc.currentShift ? elapsedSince(sc.currentShift.inTime) : '';
+    emoji.textContent = '👋';
+    title.textContent = `Clock Out, ${firstName}?`;
+    body.textContent = `You've been on shift for ${elapsed}. This will record your end time as ${fullTimeStr()}.`;
+    btn.textContent = 'Yes, Clock Out';
+    btn.className = 'confirm-btn yes-out';
+  }
+  overlay.classList.add('open');
+}
+
+function confirmClock() {
+  if (!pendingClockAction) return;
+  var sid = pendingClockAction.sid;
+  var action = pendingClockAction.action;
+  if (action === 'in') clockIn(sid);
+  else clockOut(sid);
+  closeConfirm();
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  pendingClockAction = null;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function render() {
+  const main = document.getElementById('main-content');
+  stopTimer();
+
+  if (!taskData || !taskData.staff || !taskData.staff.length) {
+    main.innerHTML = `
+      <div class="no-data">
+        <div class="big-emoji">🌿</div>
+        <h3>No tasks published yet</h3>
+        <p>Your manager hasn't published this week's tasks yet. Check back soon!</p>
+      </div>`;
+    return;
+  }
+
+  if (!activeStaffId || !taskData.staff.find(s=>s.id===activeStaffId)) {
+    activeStaffId = taskData.staff[0].id;
+  }
+
+  const staffPills = taskData.staff.map(s => `
+    <div class="staff-pill ${s.id===activeStaffId?'active':''}"
+      style="${s.id===activeStaffId?`background:${s.color};border-color:${s.color}`:''}"
+      onclick="setStaff('${s.id}')">
+      <span class="pill-dot" style="background:${s.id===activeStaffId?'rgba(255,255,255,0.6)':s.color}"></span>
+      ${escHtml(s.name)}
+    </div>`).join('');
+
+  const s = taskData.staff.find(s=>s.id===activeStaffId);
+  if (!s) return;
+
+  // Progress
+  const allTasks = s.categories.flatMap(c=>c.tasks.filter(t=>t.text.trim()));
+  const doneTasks = allTasks.filter(t=>t.done);
+  const pct = allTasks.length ? Math.round(doneTasks.length/allTasks.length*100) : 0;
+  const allDone = pct===100 && allTasks.length>0;
+  const ws = taskData.weekStart ? fmtDate(taskData.weekStart) : '';
+  const we = taskData.weekEnd ? fmtDate(taskData.weekEnd) : '';
+  const dateRange = ws ? (we?`${ws} – ${we}`:ws) : 'This Week';
+
+  // Clock state
+  const sc = getStaffClock(activeStaffId);
+  const clockedIn = isClockedIn(activeStaffId);
+
+  // Shift history — group by date, show last 10 shifts
+  const historyToShow = sc.history.slice(0, 10);
+  // Group shifts by date
+  const grouped = {};
+  historyToShow.forEach(h => {
+    if (!grouped[h.date]) grouped[h.date] = [];
+    grouped[h.date].push(h);
+  });
+  const historyHtml = Object.entries(grouped).map(([date, shifts]) => `
+    <div class="shift-date-group">
+      <div class="shift-date-header">${date}</div>
+      ${shifts.map(h => `
+        <div class="shift-row">
+          <div class="shift-row-times">${h.inTime} → ${h.outTime}</div>
+          <div class="shift-row-duration">${h.duration}</div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  const clockCardHtml = `
+    <div class="clock-card ${clockedIn?'clocked-in':'clocked-out'}">
+      <div class="clock-top">
+        <div>
+          <div class="clock-status-label">Current Shift</div>
+          <div class="clock-name">${escHtml(s.name)}</div>
+        </div>
+        <div class="clock-status-pill ${clockedIn?'in':'out'}">
+          <span class="status-dot ${clockedIn?'in':''}"></span>
+          ${clockedIn ? 'On Shift' : 'Off Shift'}
+        </div>
+      </div>
+
+      <div class="live-timer ${clockedIn?'':'dim'}" id="live-timer">
+        ${clockedIn ? elapsedSince(sc.currentShift.inTime) : '00:00:00'}
+      </div>
+      <div class="clock-in-time ${clockedIn?'active':''}">
+        ${clockedIn ? `Clocked in at ${sc.currentShift.inFormatted}` : 'Not clocked in'}
+      </div>
+
+      <button class="clock-btn ${clockedIn?'btn-clockout':'btn-clockin'}"
+        onclick="showClockConfirm('${activeStaffId}','${clockedIn?'out':'in'}')">
+        ${clockedIn ? '🏁 Clock Out' : '🌿 Clock In'}
+      </button>
+
+      ${sc.history.length ? `
+        <div class="shift-history">
+          <div class="shift-history-header">
+            <div class="shift-history-label">Shift History</div>
+            <div class="shift-week-total">${weekTotalHours(sc.history)} this week</div>
+          </div>
+          ${historyHtml}
+        </div>` : ''}
+    </div>`;
+
+  // Top 3
+  const top3Html = s.top3.filter(t=>t.trim()).length ? `
+    <div class="top3-section">
+      <div class="section-label">Top 3 This Week</div>
+      <div class="priority-cards">
+        ${s.top3.map((t,i) => t.trim() ? `
+          <div class="priority-card p${i+1} ${s.top3_done&&s.top3_done[i]?'done':''}"
+            onclick="toggleTop3('${s.id}',${i})">
+            <div class="pc-number">${i+1}</div>
+            <div class="pc-content"><div class="pc-text">${escHtml(t)}</div></div>
+            <div class="pc-check">${s.top3_done&&s.top3_done[i]?'✓':''}</div>
+          </div>` : '').join('')}
+      </div>
+    </div>` : '';
+
+  // Categories
+  const catsHtml = s.categories.map(cat => {
+    const tasks = cat.tasks.filter(t=>t.text.trim());
+    if (!tasks.length) return '';
+    const catDone = tasks.filter(t=>t.done).length;
+    const catPct = tasks.length ? Math.round(catDone/tasks.length*100) : 0;
+    return `
+      <div class="cat-card" id="catcard_${s.id}_${cat.id}">
+        <div class="cat-header" onclick="toggleCat('${s.id}','${cat.id}')">
+          <div class="cat-header-left">
+            <span class="cat-emoji">${cat.icon}</span>
+            <span class="cat-title">${escHtml(cat.name)}</span>
+          </div>
+          <div class="cat-progress">
+            <span>${catDone}/${tasks.length}</span>
+            <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${catPct}%"></div></div>
+            <span class="cat-toggle">▾</span>
+          </div>
+        </div>
+        <div class="cat-body">
+          ${tasks.map((t,i) => {
+            const dl = t.deadline ? deadlineTag(t.deadline, t.done) : '';
+            const pr = (t.priority==='high'||t.priority==='medium') ?
+              `<span class="task-priority-tag ${t.priority}">${t.priority==='high'?'🔴 High':'🟡 Medium'}</span>` : '';
+            const doneTime = t.doneAt ? `<span class="task-done-time">✓ ${t.doneAt}</span>` : '';
+            return `
+              <div class="task-item ${t.done?'done':''} ${!t.done&&t.deadline&&isOverdue(t.deadline)?'overdue':''}"
+                onclick="toggleTask('${s.id}','${cat.id}',${i})">
+                <div class="task-checkbox">${t.done?'✓':''}</div>
+                <div class="task-info">
+                  <div class="task-name">${escHtml(t.text)}</div>
+                  ${(dl||pr||doneTime)?`<div class="task-meta">${dl}${pr}${doneTime}</div>`:''}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  const notesHtml = s.notes&&s.notes.trim() ? `
+    <div class="notes-card">
+      <div class="notes-label">📝 Notes from Mia</div>
+      <div class="notes-text">${escHtml(s.notes)}</div>
+    </div>` : '';
+
+  const allDoneBanner = allDone ? `
+    <div class="completed-banner">
+      <div class="big">🌿</div>
+      <h3>All done this week!</h3>
+      <p>Amazing work. Thank you for taking care of Bloom Loft.</p>
+    </div>` : '';
+
+  main.innerHTML = `
+    <div class="staff-selector">
+      <div class="selector-label">I am</div>
+      <div class="staff-pills">${staffPills}</div>
+    </div>
+
+    ${clockCardHtml}
+
+    <div class="week-banner">
+      <div class="week-banner-left">
+        <div class="week-banner-title">${escHtml(s.name)}'s Tasks</div>
+        <div class="week-banner-sub">${dateRange}${taskData.weekTheme?' · '+escHtml(taskData.weekTheme):''}</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-pct">${pct}%</div>
+        <div class="progress-label">${doneTasks.length}/${allTasks.length} done</div>
+      </div>
+      <div class="progress-bar-track" style="width:100%;flex-basis:100%">
+        <div class="progress-bar-fill" style="width:${pct}%"></div>
+      </div>
+    </div>
+
+    ${allDoneBanner}
+    ${top3Html}
+    <div class="categories-section">${catsHtml}</div>
+    ${notesHtml}
+  `;
+
+  if (clockedIn) startTimer(activeStaffId);
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────────────────────
+function setStaff(id) { activeStaffId=id; render(); }
+
+async function toggleTask(sid,cid,idx) {
+  const s = taskData.staff.find(s=>s.id===sid);
+  const cat = s.categories.find(c=>c.id===cid);
+  const task = cat.tasks[idx];
+  task.done = !task.done;
+  task.doneAt = task.done ? fullTimeStr() : null;
+  await dbSet(STORAGE_KEY, taskData);
+  render();
+}
+
+async function toggleTop3(sid,idx) {
+  const s = taskData.staff.find(s=>s.id===sid);
+  if (!s.top3_done) s.top3_done=[false,false,false];
+  s.top3_done[idx]=!s.top3_done[idx];
+  await dbSet(STORAGE_KEY, taskData);
+  render();
+}
+
+function toggleCat(sid,cid) {
+  var _cel=document.getElementById('catcard_'+sid+'_'+cid);if(_cel)_cel.classList.toggle('collapsed');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(s){if(!s)return'';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function fullTimeStr(){return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});}
+function isOverdue(ds){if(!ds)return false;return new Date(ds+'T23:59:59')<today;}
+function isToday(ds){if(!ds)return false;return new Date(ds+'T00:00:00').toDateString()===today.toDateString();}
+function deadlineTag(ds,done){
+  if(!ds)return'';
+  const label=`Due ${fmtDate(ds)}`;
+  if(done)return`<span class="task-deadline-tag done-tag">✓ ${label}</span>`;
+  if(isOverdue(ds))return`<span class="task-deadline-tag overdue">⚠ Overdue · ${fmtDate(ds)}</span>`;
+  if(isToday(ds))return`<span class="task-deadline-tag today">Today</span>`;
+  return`<span class="task-deadline-tag upcoming">${label}</span>`;
+}
+
+document.getElementById('confirm-overlay').addEventListener('click', e => {
+  if (e.target===document.getElementById('confirm-overlay')) closeConfirm();
+});
+
+function weekTotalHours(history) {
+  // Sum all shifts from this week (last 7 days)
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  let totalMins = 0;
+  history.forEach(h => {
+    if (!h.inISO) return;
+    const inTime = new Date(h.inISO);
+    if (inTime < cutoff) return;
+    const ms = new Date(h.outISO) - inTime;
+    totalMins += Math.floor(ms / 60000);
+  });
+  if (!totalMins) return '0h this week';
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  return hrs > 0 ? `${hrs}h ${mins}m total` : `${mins}m total`;
+}
+
+loadData();
+
+// Auto-refresh from Supabase every 30 seconds to pick up any manager changes
+setInterval(async function() {
+  const fresh = await dbGet(STORAGE_KEY);
+  if (fresh) { taskData = fresh; render(); }
+}, 30000);
+</script>
+</body>
+</html>
